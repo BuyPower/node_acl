@@ -172,34 +172,40 @@ It will return an array of resource:[permissions] like this:
 Finally, we provide a middleware for Express for easy protection of resources.
 
 ```javascript
-acl.middleware()
+acl.middleware(role, [options])
 ```
+
+This accepts one parameter role which can be either a string or a function that returns a string. Ultimately, this will represent the role of the autheticated user.
 
 We can protect a resource like this:
 
 ```javascript
-app.put('/blogs/:id', acl.middleware(), function(req, res, next){…}
+app.put('/blogs/:id', acl.middleware(role), function(req, res, next){…}
 ```
 
-The middleware will protect the resource named by *req.url*, pick the user from *req.session.userId* and check the permission for *req.method*, so the above would be equivalent to something like this:
+Alternatively:
 
 ```javascript
-acl.isAllowed(req.session.userId, '/blogs/12345', 'put')
+app.put('/blogs/:id', acl.middleware((req) => req.user.role), function(req, res, next){…}
 ```
 
-The middleware accepts 3 optional arguments, that are useful in some situations. For example, sometimes we
+The middleware will protect the resource named by *req.url* by default (unless a resource is named in the options) and check the permission for *req.method* (again, by default, if a list of action(s) is not provided in the options), so the above would be equivalent to something like this:
+
+```javascript
+acl.isAllowed(role, '/blogs/12345', 'put')
+```
+
+The middleware accepts 2 optional parameters as an member of the second argument, that are useful in some situations. For example, sometimes we
 cannot consider the whole url as the resource:
 
 ```javascript
-app.put('/blogs/:id/comments/:commentId', acl.middleware(3), function(req, res, next){…}
+app.put('/blogs/:id/comments/:commentId', acl.middleware(role), function(req, res, next){…}
 ```
 
-In this case the resource will be just the three first components of the url (without the ending slash).
-
-It is also possible to add a custom userId or check for other permissions than the method:
+It is also possible to check for other permissions other than the request method:
 
 ```javascript
-app.put('/blogs/:id/comments/:commentId', acl.middleware(3, 'joed', 'post'), function(req, res, next){…}
+app.put('/blogs/:id/comments/:commentId', acl.middleware('joed', { actions: 'add.blog.comment' }), function(req, res, next){…}
 ```
 
 ## Methods
